@@ -1,6 +1,8 @@
 package icu.nullptr.hidemyapplist.ui.fragment
 
 import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.addCallback
@@ -27,6 +29,20 @@ abstract class AppSelectFragment : Fragment(R.layout.fragment_app_select) {
     protected abstract val adapter: AppSelectAdapter
 
     private var search = ""
+
+    private fun handleBack(): Boolean {
+        Log.e("back", "handleBack?", Throwable())
+        val searchView = binding.toolbar.menu.findItem(R.id.menu_search).actionView as SearchView
+        return if (searchView.isIconified) {
+            onBack()
+            true
+        } else {
+            search = ""
+            applyFilter()
+            searchView.isIconified = true
+            false
+        }
+    }
 
     protected open fun onBack() {
         navController.navigateUp()
@@ -74,12 +90,12 @@ abstract class AppSelectFragment : Fragment(R.layout.fragment_app_select) {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) { onBack() }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) { handleBack() }
         setupToolbar(
             toolbar = binding.toolbar,
             title = getString(R.string.title_app_select),
             navigationIcon = R.drawable.baseline_arrow_back_24,
-            navigationOnClick = { onBack() },
+            navigationOnClick = { handleBack() },
             menuRes = R.menu.menu_app_list,
             onMenuOptionSelected = this::onMenuOptionSelected
         )
@@ -116,6 +132,12 @@ abstract class AppSelectFragment : Fragment(R.layout.fragment_app_select) {
                 .collect {
                     binding.swipeRefresh.isRefreshing = it
                 }
+        }
+
+        binding.root.keyPreImeCallback = { event ->
+            if (event.action == KeyEvent.ACTION_UP && event.keyCode == KeyEvent.KEYCODE_BACK) {
+                handleBack()
+            } else false
         }
 
         sortList()
