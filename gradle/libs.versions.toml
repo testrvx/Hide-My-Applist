@@ -31,7 +31,6 @@ com-github-liujingxing-rxhttp-compiler = { module = "com.github.liujingxing.rxht
 com-github-liujingxing-rxhttp-converter-serialization = { module = "com.github.liujingxing.rxhttp:converter-serialization", version.ref = "rxhttp" }
 com-github-topjohnwu-libsu-core = { module = "com.github.topjohnwu.libsu:core", version = "5.0.3" }
 com-google-android-material = { module = "com.google.android.material:material", version = "1.7.0" }
-com-google-android-gms-play-services-ads = { module = "com.google.android.gms:play-services-ads", version = "22.2.0" }
 com-google-firebase-firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx", version = "21.2.0" }
 com-google-firebase-bom = { module = "com.google.firebase:firebase-bom", version = "32.1.1" }
 com-google-firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx" }
