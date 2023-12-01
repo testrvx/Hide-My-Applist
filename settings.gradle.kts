@@ -25,3 +25,5 @@ include(
     ":common",
     ":xposed"
 )
+include(":system-stub")
+include(":system-stub")

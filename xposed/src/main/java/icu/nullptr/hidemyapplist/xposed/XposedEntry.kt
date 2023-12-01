@@ -1,14 +1,18 @@
 package icu.nullptr.hidemyapplist.xposed
 
 import android.content.pm.IPackageManager
+import android.os.Build
 import com.github.kyuubiran.ezxhelper.init.EzXHelperInit
-import com.github.kyuubiran.ezxhelper.utils.*
+import com.github.kyuubiran.ezxhelper.utils.findMethod
+import com.github.kyuubiran.ezxhelper.utils.getFieldByDesc
+import com.github.kyuubiran.ezxhelper.utils.hookAllConstructorAfter
+import com.github.kyuubiran.ezxhelper.utils.hookBefore
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import icu.nullptr.hidemyapplist.common.Constants
-import kotlin.concurrent.thread
+import icu.nullptr.hidemyapplist.xposed.hook.HybridClassLoader
 
 private const val TAG = "HMA-XposedEntry"
 
@@ -28,6 +32,14 @@ class XposedEntry : IXposedHookZygoteInit, IXposedHookLoadPackage {
         } else if (lpparam.packageName == "android") {
             EzXHelperInit.initHandleLoadPackage(lpparam)
             logI(TAG, "Hook entry")
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+                runCatching {
+                    HybridClassLoader.injectClassLoader(lpparam.classLoader)
+                    logD(TAG, "HybridClassLoader installed")
+                }.onFailure {
+                    logE(TAG, "HybridClassLoader not installed", it)
+                }
+            }
 
             var serviceManagerHook: XC_MethodHook.Unhook? = null
             serviceManagerHook = findMethod("android.os.ServiceManager") {
@@ -37,13 +49,11 @@ class XposedEntry : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     serviceManagerHook?.unhook()
                     val pms = param.args[1] as IPackageManager
                     logD(TAG, "Got pms: $pms")
-                    thread {
-                        runCatching {
-                            UserService.register(pms)
-                            logI(TAG, "User service started")
-                        }.onFailure {
-                            logE(TAG, "System service crashed", it)
-                        }
+                    runCatching {
+                        UserService.register(pms)
+                        logI(TAG, "User service started")
+                    }.onFailure {
+                        logE(TAG, "System service crashed", it)
                     }
                 }
             }

@@ -10,6 +10,7 @@ import icu.nullptr.hidemyapplist.common.BuildConfig
 import icu.nullptr.hidemyapplist.common.Constants
 import rikka.hidden.compat.ActivityManagerApis
 import rikka.hidden.compat.adapter.UidObserverAdapter
+import kotlin.concurrent.thread
 
 object UserService {
 
@@ -52,22 +53,25 @@ object UserService {
     fun register(pms: IPackageManager) {
         logI(TAG, "Initialize HMAService - Version ${BuildConfig.SERVICE_VERSION}")
         val service = HMAService(pms)
-        appUid = Utils.getPackageUidCompat(service.pms, Constants.APP_PACKAGE_NAME, 0, 0)
-        val appPackage = Utils.getPackageInfoCompat(service.pms, Constants.APP_PACKAGE_NAME, 0, 0)
-        if (!Utils.verifyAppSignature(appPackage.applicationInfo.sourceDir)) {
-            logE(TAG, "Fatal: App signature mismatch")
-            return
-        }
-        logD(TAG, "Client uid: $appUid")
-        logI(TAG, "Register observer")
+        thread {
+            appUid = Utils.getPackageUidCompat(service.pms, Constants.APP_PACKAGE_NAME, 0, 0)
+            val appPackage =
+                Utils.getPackageInfoCompat(service.pms, Constants.APP_PACKAGE_NAME, 0, 0)
+            if (!Utils.verifyAppSignature(appPackage.applicationInfo.sourceDir)) {
+                logE(TAG, "Fatal: App signature mismatch")
+                return@thread
+            }
+            logD(TAG, "Client uid: $appUid")
+            logI(TAG, "Register observer")
 
-        waitSystemService("activity")
-        ActivityManagerApis.registerUidObserver(
-            uidObserver,
-            ActivityManagerHidden.UID_OBSERVER_ACTIVE,
-            ActivityManagerHidden.PROCESS_STATE_UNKNOWN,
-            null
-        )
+            waitSystemService("activity")
+            ActivityManagerApis.registerUidObserver(
+                uidObserver,
+                ActivityManagerHidden.UID_OBSERVER_ACTIVE,
+                ActivityManagerHidden.PROCESS_STATE_UNKNOWN,
+                null
+            )
+        }
     }
 
     private fun waitSystemService(name: String) {
