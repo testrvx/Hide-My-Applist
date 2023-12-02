@@ -3,8 +3,16 @@ package icu.nullptr.hidemyapplist.xposed
 import android.content.pm.ApplicationInfo
 import android.content.pm.IPackageManager
 import android.os.Build
-import icu.nullptr.hidemyapplist.common.*
-import icu.nullptr.hidemyapplist.xposed.hook.*
+import icu.nullptr.hidemyapplist.common.BuildConfig
+import icu.nullptr.hidemyapplist.common.Constants
+import icu.nullptr.hidemyapplist.common.IHMAService
+import icu.nullptr.hidemyapplist.common.JsonConfig
+import icu.nullptr.hidemyapplist.xposed.hook.IFrameworkHook
+import icu.nullptr.hidemyapplist.xposed.hook.PmsHookLegacy
+import icu.nullptr.hidemyapplist.xposed.hook.PmsHookTarget28
+import icu.nullptr.hidemyapplist.xposed.hook.PmsHookTarget30
+import icu.nullptr.hidemyapplist.xposed.hook.PmsHookTarget33
+import icu.nullptr.hidemyapplist.xposed.hook.ZygoteArgsHook
 import java.io.File
 
 class HMAService(val pms: IPackageManager) : IHMAService.Stub() {
@@ -129,7 +137,7 @@ class HMAService(val pms: IPackageManager) : IHMAService.Stub() {
         if (caller == null || query == null) return false
         if (caller in Constants.packagesShouldNotHide || query in Constants.packagesShouldNotHide) return false
         if ((caller == Constants.GMS_PACKAGE_NAME || caller == Constants.GSF_PACKAGE_NAME) && query == Constants.APP_PACKAGE_NAME) return false // If apply hide on gms, hma app will crash 😓
-        if (caller in query) return false
+        // if (caller in query) return false
         val appConfig = config.scope[caller] ?: return false
         if (appConfig.useWhitelist && appConfig.excludeSystemApps && query in systemApps) return false
 
