@@ -3,15 +3,11 @@ package icu.nullptr.hidemyapplist.xposed.hook
 import android.annotation.TargetApi
 import android.os.Build
 import com.android.server.pm.AppsFilter
-import com.android.server.pm.PackageSetting
-import com.android.server.pm.SettingBase
 import com.github.kyuubiran.ezxhelper.utils.findMethod
 import com.github.kyuubiran.ezxhelper.utils.getObject
 import com.github.kyuubiran.ezxhelper.utils.hookBefore
-import com.github.kyuubiran.ezxhelper.utils.putObject
 import de.robv.android.xposed.XC_MethodHook
 import icu.nullptr.hidemyapplist.common.Constants
-import icu.nullptr.hidemyapplist.xposed.AppsFilterProxy
 import icu.nullptr.hidemyapplist.xposed.HMAService
 import icu.nullptr.hidemyapplist.xposed.Utils
 import icu.nullptr.hidemyapplist.xposed.logD
@@ -24,6 +20,12 @@ class PmsHookTarget30(private val service: HMAService) : IFrameworkHook {
 
     companion object {
         private const val TAG = "PmsHookTarget30"
+        private var sInstance: PmsHookTarget30? = null
+
+        @JvmStatic
+        fun shouldFilterApplication(callingUid: Int, targetPkgSetting: Any): Boolean {
+            return sInstance?.shouldFilterApp(callingUid, targetPkgSetting) ?: false
+        }
     }
 
     private var hook: XC_MethodHook.Unhook? = null
@@ -35,55 +37,43 @@ class PmsHookTarget30(private val service: HMAService) : IFrameworkHook {
     override fun load() {
         logI(TAG, "Load hook")
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+            sInstance = this
             doOptimizeHook()
         } else {
             doFallbackHook()
         }
     }
 
-    private fun createAppFilterProxy(filter: Any) = object : AppsFilterProxy(filter as AppsFilter) {
-        override fun shouldFilterApplication(
-            callingUid: Int,
-            callingSetting: SettingBase?,
-            targetPkgSetting: PackageSetting?,
-            userId: Int
-        ): Boolean {
-            var shouldFilter = false
-            runCatching {
-                if (unhooked) return@runCatching
-                if (callingUid == Constants.UID_SYSTEM) return@runCatching
-                val callingApps = Utils.binderLocalScope {
-                    service.pms.getPackagesForUid(callingUid)
-                } ?: return@runCatching
-                val targetApp = Utils.getPackageNameFromPackageSettings(targetPkgSetting!!)
-                for (caller in callingApps) {
-                    if (service.shouldHide(caller, targetApp)) {
-                        shouldFilter = true
-                        service.filterCount++
-                        val last = lastFilteredApp.getAndSet(caller)
-                        if (last != caller) logI(
-                            TAG,
-                            "@shouldFilterApplication: query from $caller"
-                        )
-                        logD(
-                            TAG,
-                            "@shouldFilterApplication caller: $callingUid $caller, target: $targetApp"
-                        )
-                        return@runCatching
-                    }
+    private fun shouldFilterApp(callingUid: Int, targetPkgSetting: Any): Boolean {
+        var shouldFilter = false
+        runCatching {
+            if (unhooked) return@runCatching
+            if (callingUid == Constants.UID_SYSTEM) return@runCatching
+            val callingApps = Utils.binderLocalScope {
+                service.pms.getPackagesForUid(callingUid)
+            } ?: return@runCatching
+            val targetApp = Utils.getPackageNameFromPackageSettings(targetPkgSetting)
+            for (caller in callingApps) {
+                if (service.shouldHide(caller, targetApp)) {
+                    shouldFilter = true
+                    service.filterCount++
+                    val last = lastFilteredApp.getAndSet(caller)
+                    if (last != caller) logI(
+                        TAG,
+                        "@shouldFilterApplication: query from $caller"
+                    )
+                    logD(
+                        TAG,
+                        "@shouldFilterApplication caller: $callingUid $caller, target: $targetApp"
+                    )
+                    return@runCatching
                 }
-            }.onFailure {
-                logE(TAG, "something wrong happened, unload", it)
-                unload()
             }
-            if (shouldFilter) return true
-            return super.shouldFilterApplication(
-                callingUid,
-                callingSetting,
-                targetPkgSetting,
-                userId
-            )
+        }.onFailure {
+            logE(TAG, "something wrong happened, unload", it)
+            unload()
         }
+        return shouldFilter
     }
 
     private fun doOptimizeHook() {
@@ -95,7 +85,7 @@ class PmsHookTarget30(private val service: HMAService) : IFrameworkHook {
         runCatching {
             val pms = service.pms
             val filter = pms.getObject("mAppsFilter")
-            pms.putObject("mAppsFilter", createAppFilterProxy(filter))
+            ArtHelper.setObjectClass(filter, AppsFilterProxy30::class.java)
             origAppFilter = filter
             useFallback = false
             logI(TAG, "install optimize hook success")
@@ -144,11 +134,15 @@ class PmsHookTarget30(private val service: HMAService) : IFrameworkHook {
         hook?.unhook()
         hook = null
         unhooked = true
+        sInstance = null
         if (!useFallback) {
             runCatching {
-                service.pms.putObject("mAppsFilter", origAppFilter)
+                ArtHelper.setObjectClass(
+                    service.pms.getObject("mAppsFilter"),
+                    AppsFilter::class.java
+                )
             }.onFailure {
-                logE(TAG, "failed to restore appFilter")
+                logE(TAG, "failed to restore appFilter class")
             }
         }
     }
