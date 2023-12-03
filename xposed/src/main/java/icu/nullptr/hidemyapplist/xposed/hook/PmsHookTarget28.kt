@@ -8,7 +8,11 @@ import com.github.kyuubiran.ezxhelper.utils.hookAfter
 import com.github.kyuubiran.ezxhelper.utils.hookBefore
 import de.robv.android.xposed.XC_MethodHook
 import icu.nullptr.hidemyapplist.common.Constants
-import icu.nullptr.hidemyapplist.xposed.*
+import icu.nullptr.hidemyapplist.xposed.HMAService
+import icu.nullptr.hidemyapplist.xposed.Utils
+import icu.nullptr.hidemyapplist.xposed.logD
+import icu.nullptr.hidemyapplist.xposed.logE
+import icu.nullptr.hidemyapplist.xposed.logI
 import java.util.concurrent.atomic.AtomicReference
 
 @TargetApi(Build.VERSION_CODES.P)
@@ -81,6 +85,7 @@ class PmsHookTarget28(private val service: HMAService) : IFrameworkHook {
                 unload()
             }
         }
+        service.currentHookType = "API28"
     }
 
     override fun unload() {

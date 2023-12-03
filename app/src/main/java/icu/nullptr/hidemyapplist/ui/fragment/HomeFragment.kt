@@ -150,7 +150,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             if (serviceVersion < icu.nullptr.hidemyapplist.common.BuildConfig.SERVICE_VERSION) {
                 binding.serviceStatus.text = getString(R.string.home_xposed_service_old)
             } else {
-                binding.serviceStatus.text = getString(R.string.home_xposed_service_on, serviceVersion)
+                // TODO: update translations
+                binding.serviceStatus.text = getString(
+                    R.string.home_xposed_service_on,
+                    serviceVersion
+                ) + " (${ServiceClient.hookType})"
             }
             binding.filterCount.visibility = View.VISIBLE
             binding.filterCount.text = getString(R.string.home_xposed_filter_count, ServiceClient.filterCount)

@@ -74,15 +74,16 @@ public class ArtHelper {
         sObjectClassField = objectClassField;
     }
 
-    public static void setObjectClass(Object o, Class<?> c) {
+    public static void setObjectClass(Object o, Class<?> c) throws Throwable {
         try {
             sObjectClassField.set(o, c);
         } catch (Throwable t) {
             logE(TAG, "failed to set " + o + " class to " + c, t);
+            throw t;
         }
     }
 
-    public static void setMethodNonFinal(Executable method) {
+    public static void setMethodNonFinal(Executable method) throws Throwable {
         try {
             long addr = (long) sArtMethodField.get(method);
             int flags = theUnsafe.getInt(addr + sAccessFlagOffset);
@@ -90,24 +91,27 @@ public class ArtHelper {
             theUnsafe.putInt(addr + sAccessFlagOffset, flags);
         } catch (Throwable t) {
             logE(TAG, "failed to set " + method + " to non-final", t);
+            throw t;
         }
     }
 
-    public static void setClassNonFinal(Class<?> clazz) {
+    public static void setClassNonFinal(Class<?> clazz) throws Throwable {
         try {
             int flags = (int) sClassAccessFlags.get(clazz);
             sClassAccessFlags.set(clazz, flags & ~kAccFinal);
         } catch (Throwable t) {
             logE(TAG, "failed to set " + clazz + " to non-final", t);
+            throw t;
         }
     }
 
-    public static void setClassPublic(Class<?> clazz) {
+    public static void setClassPublic(Class<?> clazz) throws Throwable {
         try {
             int flags = (int) sClassAccessFlags.get(clazz);
             sClassAccessFlags.set(clazz, flags | kAccPublic);
         } catch (Throwable t) {
             logE(TAG, "failed to set " + clazz + " to public", t);
+            throw t;
         }
     }
 }

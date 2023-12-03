@@ -49,10 +49,13 @@ class HMAService(val pms: IPackageManager) : IHMAService.Stub() {
             }
         }
 
+    var currentHookType: String
+
     init {
         searchDataDir()
         instance = this
         loadConfig()
+        currentHookType = "unknown"
         installHooks()
         logI(TAG, "HMA service initialized")
     }
@@ -204,4 +207,6 @@ class HMAService(val pms: IPackageManager) : IHMAService.Stub() {
             logFile.createNewFile()
         }
     }
+
+    override fun getHookType(): String = currentHookType
 }

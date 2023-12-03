@@ -136,6 +136,7 @@ class PmsHookLegacy(private val service: HMAService) : IFrameworkHook {
             "getPackageUid"
             -> hooks += setResult(method, -1)
         }
+        service.currentHookType = "legacy"
     }
 
     override fun unload() {

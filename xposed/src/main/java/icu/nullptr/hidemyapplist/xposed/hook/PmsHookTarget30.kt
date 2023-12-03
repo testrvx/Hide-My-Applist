@@ -13,6 +13,7 @@ import icu.nullptr.hidemyapplist.xposed.Utils
 import icu.nullptr.hidemyapplist.xposed.logD
 import icu.nullptr.hidemyapplist.xposed.logE
 import icu.nullptr.hidemyapplist.xposed.logI
+import icu.nullptr.hidemyapplist.xposed.logW
 import java.util.concurrent.atomic.AtomicReference
 
 @TargetApi(Build.VERSION_CODES.R)
@@ -36,12 +37,8 @@ class PmsHookTarget30(private val service: HMAService) : IFrameworkHook {
 
     override fun load() {
         logI(TAG, "Load hook")
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
-            sInstance = this
-            doOptimizeHook()
-        } else {
-            doFallbackHook()
-        }
+        sInstance = this
+        doOptimizeHook()
     }
 
     private fun shouldFilterApp(callingUid: Int, targetPkgSetting: Any): Boolean {
@@ -77,20 +74,27 @@ class PmsHookTarget30(private val service: HMAService) : IFrameworkHook {
     }
 
     private fun doOptimizeHook() {
-        if (!HybridClassLoader.sInjected) {
-            doFallbackHook()
-            return
-        }
         logI(TAG, "installing optimize hook")
         runCatching {
+            if (!HybridClassLoader.sInjected) {
+                logI(TAG, "hybridClassLoader not injected, use fallback")
+                return@runCatching
+            }
             val pms = service.pms
             val filter = pms.getObject("mAppsFilter")
-            ArtHelper.setObjectClass(filter, AppsFilterProxy30::class.java)
+            if (filter.javaClass != AppsFilter::class.java) {
+                logW(TAG, "appsFilter class is not AppsFilter: ${filter.javaClass.name}")
+                return@runCatching
+            }
+            ArtHelper.setObjectClass(filter, AppsFilterProxy::class.java)
             origAppFilter = filter
             useFallback = false
+            service.currentHookType = "API30-Optimize"
             logI(TAG, "install optimize hook success")
         }.onFailure {
             logE(TAG, "failed to install, use fallback", it)
+        }
+        if (useFallback) {
             doFallbackHook()
         }
     }
@@ -100,34 +104,13 @@ class PmsHookTarget30(private val service: HMAService) : IFrameworkHook {
         hook = findMethod("com.android.server.pm.AppsFilter") {
             name == "shouldFilterApplication"
         }.hookBefore { param ->
-            runCatching {
-                val callingUid = param.args[0] as Int
-                if (callingUid == Constants.UID_SYSTEM) return@hookBefore
-                val callingApps = Utils.binderLocalScope {
-                    service.pms.getPackagesForUid(callingUid)
-                } ?: return@hookBefore
-                val targetApp = Utils.getPackageNameFromPackageSettings(param.args[2])
-                for (caller in callingApps) {
-                    if (service.shouldHide(caller, targetApp)) {
-                        param.result = true
-                        service.filterCount++
-                        val last = lastFilteredApp.getAndSet(caller)
-                        if (last != caller) logI(
-                            TAG,
-                            "@shouldFilterApplication: query from $caller"
-                        )
-                        logD(
-                            TAG,
-                            "@shouldFilterApplication caller: $callingUid $caller, target: $targetApp"
-                        )
-                        return@hookBefore
-                    }
-                }
-            }.onFailure {
-                logE(TAG, "Fatal error occurred, disable hooks", it)
-                unload()
+            val callingUid = param.args[0] as Int
+            val targetPkgStatic = param.args[2]
+            if (shouldFilterApp(callingUid, targetPkgStatic)) {
+                param.result = true
             }
         }
+        service.currentHookType = "API30-Fallback"
     }
 
     override fun unload() {

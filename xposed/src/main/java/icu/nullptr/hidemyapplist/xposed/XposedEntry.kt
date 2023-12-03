@@ -32,7 +32,7 @@ class XposedEntry : IXposedHookZygoteInit, IXposedHookLoadPackage {
         } else if (lpparam.packageName == "android") {
             EzXHelperInit.initHandleLoadPackage(lpparam)
             logI(TAG, "Hook entry")
-            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 runCatching {
                     HybridClassLoader.injectClassLoader(lpparam.classLoader)
                     logD(TAG, "HybridClassLoader installed")
