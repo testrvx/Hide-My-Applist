@@ -2,22 +2,40 @@ package icu.nullptr.hidemyapplist
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import com.tsng.hidemyapplist.R
+import icu.nullptr.hidemyapplist.common.BinderWrapper
 import icu.nullptr.hidemyapplist.service.ConfigManager
 import icu.nullptr.hidemyapplist.service.PrefManager
+import icu.nullptr.hidemyapplist.service.ServiceClient
 import icu.nullptr.hidemyapplist.ui.receiver.AppChangeReceiver
 import icu.nullptr.hidemyapplist.ui.util.makeToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import me.zhanghai.android.appiconloader.AppIconLoader
+import org.lsposed.hiddenapibypass.HiddenApiBypass
+import rikka.hidden.compat.util.SystemServiceBinder
 import rikka.material.app.LocaleDelegate
-import java.util.*
+import java.util.Locale
 import kotlin.system.exitProcess
 
 lateinit var hmaApp: MyApp
 
 class MyApp : Application() {
+    companion object {
+        init {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                HiddenApiBypass.setHiddenApiExemptions("")
+
+                SystemServiceBinder.setOnGetBinderListener {
+                    ServiceClient.asBinder()?.let { svc ->
+                        BinderWrapper(it, svc)
+                    } ?: it
+                }
+            }
+        }
+    }
 
     @JvmField
     var isHooked = false

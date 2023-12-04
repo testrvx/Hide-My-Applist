@@ -30,5 +30,6 @@ kotlin {
 
 dependencies {
     api(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.annotation)
     compileOnly(libs.dev.rikka.hidden.stub)
 }

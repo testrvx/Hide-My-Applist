@@ -3,11 +3,14 @@ package icu.nullptr.hidemyapplist.util
 import android.content.pm.ApplicationInfo
 import android.content.pm.IPackageManager
 import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.os.IUserManager
+import android.os.ServiceManager
+import icu.nullptr.hidemyapplist.common.BinderWrapper
 import icu.nullptr.hidemyapplist.common.Constants
 import icu.nullptr.hidemyapplist.hmaApp
 import icu.nullptr.hidemyapplist.service.PrefManager
+import icu.nullptr.hidemyapplist.service.ServiceClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -15,8 +18,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import rikka.hidden.compat.PackageManagerApis
+import rikka.hidden.compat.UserManagerApis
 import java.text.Collator
-import java.util.*
+import java.util.Locale
 
 object PackageHelper {
 
@@ -49,8 +54,17 @@ object PackageHelper {
         }
     }
 
-    private lateinit var ipm: IPackageManager
-    private lateinit var pm: PackageManager
+    private val ipm: IPackageManager by lazy {
+        IPackageManager.Stub.asInterface(
+            BinderWrapper(ServiceManager.getService("package"), ServiceClient.asBinder()!!)
+        )
+    }
+    private val ium: IUserManager by lazy {
+        IUserManager.Stub.asInterface(
+            BinderWrapper(ServiceManager.getService("user"), ServiceClient.asBinder()!!)
+        )
+    }
+    private val pm = hmaApp.packageManager
 
     private val packageCache = MutableSharedFlow<Map<String, PackageCache>>(replay = 1)
     private val mAppList = MutableSharedFlow<MutableList<String>>(replay = 1)
@@ -60,8 +74,6 @@ object PackageHelper {
     val isRefreshing: SharedFlow<Boolean> = mRefreshing
 
     init {
-        // TODO: PackageManagerDelegate
-        pm = hmaApp.packageManager
         invalidateCache()
     }
 
@@ -69,15 +81,21 @@ object PackageHelper {
         hmaApp.globalScope.launch {
             mRefreshing.emit(true)
             val cache = withContext(Dispatchers.IO) {
-                val packages = pm.getInstalledPackages(0)
-                mutableMapOf<String, PackageCache>().also {
-                    for (packageInfo in packages) {
-                        if (packageInfo.packageName in Constants.packagesShouldNotHide) continue
-                        val label = pm.getApplicationLabel(packageInfo.applicationInfo).toString()
-                        val icon = hmaApp.appIconLoader.loadIcon(packageInfo.applicationInfo)
-                        it[packageInfo.packageName] = PackageCache(packageInfo, label, icon)
+                val packageMap = mutableMapOf<String, PackageCache>()
+                for (userId in UserManagerApis.getUserIdsNoThrow()) {
+                    val packages = PackageManagerApis.getInstalledPackagesNoThrow(0, userId)
+                    packages.forEach { packageInfo ->
+                        if (packageInfo.packageName in Constants.packagesShouldNotHide) return@forEach
+                        packageMap.computeIfAbsent(packageInfo.packageName) {
+                            packageInfo.applicationInfo.uid %= 100000
+                            val label =
+                                pm.getApplicationLabel(packageInfo.applicationInfo).toString()
+                            val icon = hmaApp.appIconLoader.loadIcon(packageInfo.applicationInfo)
+                            PackageCache(packageInfo, label, icon)
+                        }
                     }
                 }
+                packageMap
             }
             packageCache.emit(cache)
             mAppList.emit(cache.keys.toMutableList())
