@@ -27,7 +27,6 @@ class PmsHookTarget33(private val service: HMAService) : IFrameworkHook {
         private var useFallback = true
         private var origAppFilter: Any? = null
         private var unhooked = false
-        private var appFilterSnapshotImplProxyClass: Class<*>? = null
 
         @JvmStatic
         fun shouldFilterApplication(
@@ -36,12 +35,6 @@ class PmsHookTarget33(private val service: HMAService) : IFrameworkHook {
             targetPkgSetting: Any
         ): Boolean {
             return sInstance?.shouldFilterApp(snapshot, callingUid, targetPkgSetting) ?: false
-        }
-
-        @JvmStatic
-        fun setupSnapshot(snapshot: Any) {
-            logD(TAG, "setup snapshot for $snapshot")
-            appFilterSnapshotImplProxyClass?.let { ArtHelper.setObjectClass(snapshot, it) }
         }
     }
 
@@ -113,10 +106,6 @@ class PmsHookTarget33(private val service: HMAService) : IFrameworkHook {
                 return@runCatching
             }
             ArtHelper.setClassNonFinal(appFilterImplClass)
-            // ArtHelper.setMethodNonFinal(appFilterImplClass.findMethod { name == "snapshot" })
-            hooks.addAll(hookAllConstructorAfter("com.android.server.pm.AppsFilterSnapshotImpl") {
-                setupSnapshot(it.thisObject)
-            })
             val appFilterSnapshotImplClass = Class.forName(
                 "com.android.server.pm.AppsFilterSnapshotImpl",
                 false,
@@ -126,8 +115,11 @@ class PmsHookTarget33(private val service: HMAService) : IFrameworkHook {
             val appFilterProxyClass =
                 Class.forName("icu.nullptr.hidemyapplist.xposed.hook.AppsFilterImplProxy")
             ArtHelper.setObjectClass(filter, appFilterProxyClass)
-            appFilterSnapshotImplProxyClass =
+            val appFilterSnapshotImplProxyClass =
                 Class.forName("icu.nullptr.hidemyapplist.xposed.hook.AppsFilterSnapshotImplProxy")
+            hooks.addAll(hookAllConstructorAfter("com.android.server.pm.AppsFilterSnapshotImpl") {
+                ArtHelper.setObjectClass(it.thisObject, appFilterSnapshotImplProxyClass)
+            })
             origAppFilter = filter
             useFallback = false
             service.currentHookType = "API33-Optimize"

@@ -13,8 +13,4 @@ public /*private*/ class AppsFilterImpl extends AppsFilterBase {
                                            @Nullable Object callingSetting, PackageStateInternal targetPkgSetting, int userId) {
         throw new RuntimeException("");
     }
-
-    public AppsFilterSnapshot snapshot() {
-        throw new RuntimeException("");
-    }
 }
