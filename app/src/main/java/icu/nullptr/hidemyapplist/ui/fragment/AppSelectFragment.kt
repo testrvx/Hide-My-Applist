@@ -19,7 +19,9 @@ import icu.nullptr.hidemyapplist.ui.adapter.AppSelectAdapter
 import icu.nullptr.hidemyapplist.ui.util.navController
 import icu.nullptr.hidemyapplist.ui.util.setupToolbar
 import icu.nullptr.hidemyapplist.util.PackageHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 abstract class AppSelectFragment : Fragment(R.layout.fragment_app_select) {
 
@@ -52,9 +54,13 @@ abstract class AppSelectFragment : Fragment(R.layout.fragment_app_select) {
         adapter.filter.filter(search)
     }
 
-    private fun sortList() {
+    private fun refreshList() {
         lifecycleScope.launch {
-            PackageHelper.sortList(firstComparator)
+            binding.swipeRefresh.isRefreshing = true
+            withContext(Dispatchers.IO) {
+                PackageHelper.sortList(firstComparator)
+            }
+            binding.swipeRefresh.isRefreshing = false
             applyFilter()
         }
     }
@@ -86,7 +92,7 @@ abstract class AppSelectFragment : Fragment(R.layout.fragment_app_select) {
                 PrefManager.appFilter_reverseOrder = item.isChecked
             }
         }
-        sortList()
+        refreshList()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -123,14 +129,13 @@ abstract class AppSelectFragment : Fragment(R.layout.fragment_app_select) {
         binding.list.layoutManager = LinearLayoutManager(context)
         binding.list.adapter = adapter
         binding.swipeRefresh.setOnRefreshListener {
-            PackageHelper.invalidateCache()
+            refreshList()
         }
 
         lifecycleScope.launch {
-            PackageHelper.isRefreshing
-                .flowWithLifecycle(lifecycle)
+            PackageHelper.lowerAppList.flowWithLifecycle(lifecycle)
                 .collect {
-                    binding.swipeRefresh.isRefreshing = it
+                    refreshList()
                 }
         }
 
@@ -139,7 +144,5 @@ abstract class AppSelectFragment : Fragment(R.layout.fragment_app_select) {
                 handleBack()
             } else false
         }
-
-        sortList()
     }
 }
