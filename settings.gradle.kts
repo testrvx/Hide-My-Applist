@@ -23,7 +23,6 @@ rootProject.name = "HideMyApplist"
 include(
     ":app",
     ":common",
-    ":xposed"
+    ":xposed",
+    ":system-stub"
 )
-include(":system-stub")
-include(":system-stub")
