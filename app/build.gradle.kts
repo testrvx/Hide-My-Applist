@@ -13,10 +13,6 @@ plugins {
     alias(libs.plugins.nav.safeargs.kotlin)
 }
 
-if (officialBuild) {
-    plugins.apply(libs.plugins.gms.get().pluginId)
-}
-
 android {
     namespace = "com.tsng.hidemyapplist"
 
