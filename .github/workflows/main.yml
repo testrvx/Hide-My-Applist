@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.buildRelease.outputs.releaseName }}
-          path: "app/build/apk/release/HMAL*.apk"
+          path: "app/build/apk/"
 
       - name: Upload mappings
         uses: actions/upload-artifact@v4
