@@ -104,7 +104,6 @@ dependencies {
     implementation(libs.com.github.liujingxing.rxhttp.converter.serialization)
     implementation(libs.com.github.topjohnwu.libsu.core)
     implementation(libs.com.google.android.material)
-    implementation(libs.com.google.firebase.analytics.ktx)
     implementation(libs.com.squareup.okhttp3)
     implementation(libs.dev.rikka.hidden.compat)
     implementation(libs.dev.rikka.rikkax.material)
