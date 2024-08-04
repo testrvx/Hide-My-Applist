@@ -32,8 +32,8 @@ val configVerCode by extra(90)
 val serviceVerCode by extra(98)
 val minBackupVerCode by extra(65)
 
-val androidSourceCompatibility = JavaVersion.VERSION_17
-val androidTargetCompatibility = JavaVersion.VERSION_17
+val androidSourceCompatibility = JavaVersion.VERSION_21
+val androidTargetCompatibility = JavaVersion.VERSION_21
 
 val localProperties = Properties()
 localProperties.load(file("local.properties").inputStream())
