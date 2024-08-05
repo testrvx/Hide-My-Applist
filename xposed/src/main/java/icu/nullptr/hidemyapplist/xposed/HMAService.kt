@@ -3,8 +3,6 @@ package icu.nullptr.hidemyapplist.xposed
 import android.content.pm.ApplicationInfo
 import android.content.pm.IPackageManager
 import android.os.Build
-import android.os.Parcel
-import icu.nullptr.hidemyapplist.common.BinderWrapper
 import icu.nullptr.hidemyapplist.common.BuildConfig
 import icu.nullptr.hidemyapplist.common.Constants
 import icu.nullptr.hidemyapplist.common.IHMAService
@@ -211,31 +209,4 @@ class HMAService(val pms: IPackageManager) : IHMAService.Stub() {
     }
 
     override fun getHookType(): String = currentHookType
-
-    // https://github.com/RikkaApps/Shizuku-API/blob/01e08879d58a5cb11a333535c6ddce9f7b7c88ff/server-shared/src/main/java/rikka/shizuku/server/Service.java#L136
-    override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
-        if (code == BinderWrapper.TRANSACT_CODE) {
-            logI(TAG, "remote binder wrapper transact")
-            try {
-                data.enforceInterface(BinderWrapper.BINDER_DESCRIPTOR)
-                val origBinder = data.readStrongBinder()
-                val origCode = data.readInt()
-                val origFlags = data.readInt()
-                logI(TAG, "binder=$origBinder code=$origCode flags=$origFlags")
-                val origData = Parcel.obtain()
-                try {
-                    origData.appendFrom(data, data.dataPosition(), data.dataAvail())
-                    return Utils.binderLocalScope {
-                        origBinder.transact(origCode, origData, reply, origFlags)
-                    }
-                } finally {
-                    origData.recycle()
-                }
-            } catch (t: Throwable) {
-                logE(TAG, "something wrong happened", t)
-                throw t
-            }
-        }
-        return super.onTransact(code, data, reply, flags)
-    }
 }

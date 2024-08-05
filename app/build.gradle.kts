@@ -1,4 +1,4 @@
-import java.util.Locale
+import java.util.*
 
 val officialBuild: Boolean by rootProject.extra
 
@@ -115,7 +115,6 @@ dependencies {
     implementation(libs.me.zhanghai.android.appiconloader)
     compileOnly(libs.dev.rikka.hidden.stub)
     ksp(libs.com.github.liujingxing.rxhttp.compiler)
-    implementation(libs.hiddenapibypass)
 }
 
 configurations.all {
