@@ -54,6 +54,7 @@ class XposedEntry : IXposedHookZygoteInit, IXposedHookLoadPackage {
                         logI(TAG, "Bridge service injected")
                     }.onFailure {
                         logE(TAG, "System service crashed", it)
+                    }
                 }
             }
         }
