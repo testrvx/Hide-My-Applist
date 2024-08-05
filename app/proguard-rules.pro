@@ -16,3 +16,5 @@
 -keepclassmembers class com.tsng.hidemyapplist.databinding.**  {
     public <methods>;
 }
+
+-dontobfuscate
