@@ -29,7 +29,6 @@ jobs:
           java-version: '17'
 
       - name: Write key
-        if: github.event_name != 'pull_request'
         run: |
           echo officialBuild=true >> local.properties
           echo buildWithGitSuffix=true >> local.properties
