@@ -1,6 +1,5 @@
 package icu.nullptr.hidemyapplist.service
 
-import android.os.IBinder
 import android.os.IBinder.DeathRecipient
 import android.os.Parcel
 import android.os.RemoteException
@@ -28,16 +27,13 @@ object ServiceClient : IHMAService, DeathRecipient {
     @Volatile
     private var service: IHMAService? = null
 
-    fun linkService(binder: IBinder) {
-        service = Proxy.newProxyInstance(
-            javaClass.classLoader,
-            arrayOf(IHMAService::class.java),
-            ServiceProxy(IHMAService.Stub.asInterface(binder))
-        ) as IHMAService
-        binder.linkToDeath(this, 0)
-    }
+    override fun binderDied() {
+        service = null
+        Log.e(TAG, "Binder died")
 
-    private fun getServiceLegacy(): IHMAService? {
+    override fun asBinder() = service?.asBinder()
+
+    private fun getService(): IHMAService? {
         if (service != null) return service
         val pm = ServiceManager.getService("package")
         val data = Parcel.obtain()
