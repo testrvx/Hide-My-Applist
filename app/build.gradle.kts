@@ -20,6 +20,14 @@ android {
         buildConfig = true
         viewBinding = true
     }
+
+    applicationVariants.all {
+        kotlin {
+            sourceSets.getByName(name) {
+                kotlin.srcDir("build/generated/ksp/$name/kotlin")
+            }
+        }
+    }
 }
 
 kotlin {
