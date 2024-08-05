@@ -12,11 +12,9 @@ import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import icu.nullptr.hidemyapplist.common.Constants
-import icu.nullptr.hidemyapplist.xposed.hook.HybridClassLoader
 
 private const val TAG = "HMA-XposedEntry"
 
-@Suppress("unused")
 class XposedEntry : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
@@ -49,11 +47,13 @@ class XposedEntry : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     serviceManagerHook?.unhook()
                     val pms = param.args[1] as IPackageManager
                     logD(TAG, "Got pms: $pms")
-                    runCatching {
-                        UserService.register(pms)
-                        logI(TAG, "User service started")
-                    }.onFailure {
-                        logE(TAG, "System service crashed", it)
+                    thread {
+                        runCatching {
+                            UserService.register(pms)
+                            logI(TAG, "User service started")
+                        }.onFailure {
+                            logE(TAG, "System service crashed", it)
+                        }
                     }
                 }
             }

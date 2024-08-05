@@ -26,9 +26,13 @@ val minSdkVer by extra(24)
 val targetSdkVer by extra(34)
 val buildToolsVer by extra("34.0.0")
 
-val appVerName by extra("3.2")
+val appVerName by extra("3.1.1")
 val configVerCode by extra(90)
+<<<<<<< HEAD
 val serviceVerCode by extra(98)
+=======
+val serviceVerCode by extra(95)
+>>>>>>> parent of f809e78 (No transaction hook)
 val minBackupVerCode by extra(65)
 
 val androidSourceCompatibility = JavaVersion.VERSION_17
