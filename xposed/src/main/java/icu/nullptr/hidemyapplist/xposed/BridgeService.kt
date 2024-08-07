@@ -47,7 +47,7 @@ object BridgeService {
                             Constants.ACTION_GET_BINDER -> {
                                 reply?.writeNoException()
                                 reply?.writeStrongBinder(HMAService.instance)
-                                return true
+                                return false
                             }
                             else -> logW(TAG, "Unknown action")
                         }
