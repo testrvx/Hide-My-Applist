@@ -36,29 +36,29 @@ object BridgeService {
         }
     }
 
-    private fun myTransac(code: Int, data: Parcel, reply: Parcel?): Boolean {
-        if (code == Constants.TRANSACTION) {
+    const val TRANSACTION = ('A'.code shl 24) or ('A'.code shl 16) or ('D'.code shl 8) or 'D'.code
+    const val DESCRIPTOR = "android.content.pm.IPackageManager"
+    const val ACTION_GET_BINDER = 1
+
+    private fun myTransact(code: Int, data: Parcel, reply: Parcel?): Boolean {
+        if (code == TRANSACTION) {
             if (Binder.getCallingUid() == appUid) {
-                logD(TAG, "Transaction from client")
+                log(TAG, "Transaction from client")
                 runCatching {
-                    data.enforceInterface(Constants.DESCRIPTOR)
-                    if (data.dataSize() < MAX_BINDER_SIZE) {
-                        when (data.readInt()) {
-                            Constants.ACTION_GET_BINDER -> {
-                                reply?.writeNoException()
-                                reply?.writeStrongBinder(HMAService.instance)
-                                return false
-                            }
-                            else -> logW(TAG, "Unknown action")
+                    data.enforceInterface(DESCRIPTOR)
+                    when (data.readInt()) {
+                        ACTION_GET_BINDER -> {
+                            reply?.writeNoException()
+                            reply?.writeStrongBinder(CoreManagerService.instance)
+                            return true
                         }
-                    } else {
-                        logW(TAG, "Transaction size exceeds limit")
+                        else -> log(TAG, "Unknown action")
                     }
                 }.onFailure {
-                    logE(TAG, "Transaction error", it)
+                    log(TAG, "Transaction error", it)
                 }
             } else {
-                logW(TAG, "Someone else trying to get my binder?")
+                log(TAG, "Someone else trying to get my binder?")
             }
             data.setDataPosition(0)
             reply?.setDataPosition(0)
