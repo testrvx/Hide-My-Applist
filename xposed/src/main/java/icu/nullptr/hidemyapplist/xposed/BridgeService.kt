@@ -11,9 +11,9 @@ import icu.nullptr.hidemyapplist.common.Constants
 object BridgeService {
 
     private const val TAG = "HMA-Bridge"
-    private const val MAX_BINDER_TRANSACTION_SIZE = 500 * 1024 // 500 KB in bytes
 
     private var appUid = 0
+    private const val MAX_BINDER_SIZE = 120
 
     fun register(pms: IPackageManager) {
         logI(TAG, "Initialize HMAService - Version ${BuildConfig.SERVICE_VERSION}")
@@ -40,22 +40,19 @@ object BridgeService {
         if (code == Constants.TRANSACTION) {
             if (Binder.getCallingUid() == appUid) {
                 logD(TAG, "Transaction from client")
-
-                // Check the size of the data
-                if (data.dataSize() > MAX_BINDER_TRANSACTION_SIZE) {
-                    logW(TAG, "Transaction size exceeds limit: ${data.dataSize()} bytes")
-                    return false
-                }
-
                 runCatching {
                     data.enforceInterface(Constants.DESCRIPTOR)
-                    when (data.readInt()) {
-                        Constants.ACTION_GET_BINDER -> {
-                            reply?.writeNoException()
-                            reply?.writeStrongBinder(HMAService.instance)
-                            return true
+                    if (data.dataSize() < MAX_BINDER_SIZE) {
+                        when (data.readInt()) {
+                            Constants.ACTION_GET_BINDER -> {
+                                reply?.writeNoException()
+                                reply?.writeStrongBinder(HMAService.instance)
+                                return true
+                            }
+                            else -> logW(TAG, "Unknown action")
                         }
-                        else -> logW(TAG, "Unknown action")
+                    } else {
+                        logW(TAG, "Transaction size exceeds limit")
                     }
                 }.onFailure {
                     logE(TAG, "Transaction error", it)
