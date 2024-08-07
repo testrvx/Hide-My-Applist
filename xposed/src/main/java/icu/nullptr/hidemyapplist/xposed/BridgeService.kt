@@ -32,11 +32,11 @@ object BridgeService {
             val code = param.args[0] as Int
             val data = param.args[1] as Parcel
             val reply = param.args[2] as Parcel?
-            if (myTransact(code, data, reply)) param.result = true
+            if (myTransac(code, data, reply)) param.result = true
         }
     }
 
-    private fun myTransact(code: Int, data: Parcel, reply: Parcel?): Boolean {
+    private fun myTransac(code: Int, data: Parcel, reply: Parcel?): Boolean {
         if (code == Constants.TRANSACTION) {
             if (Binder.getCallingUid() == appUid) {
                 logD(TAG, "Transaction from client")
