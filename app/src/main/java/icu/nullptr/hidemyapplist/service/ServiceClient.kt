@@ -34,7 +34,7 @@ object ServiceClient : IHMAService, DeathRecipient {
 
     override fun asBinder() = service?.asBinder()
 
-    private fun getService(): IHMAService? {
+    private fun getServiceLegacy(): IHMAService? {
         if (service != null) return service
         val pm = ServiceManager.getService("package")
         val data = Parcel.obtain()
