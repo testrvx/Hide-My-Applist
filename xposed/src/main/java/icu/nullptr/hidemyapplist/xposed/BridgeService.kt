@@ -3,6 +3,7 @@ package icu.nullptr.hidemyapplist.xposed
 import android.content.pm.IPackageManager
 import android.os.Binder
 import android.os.Parcel
+import android.os.RemoteException
 import com.github.kyuubiran.ezxhelper.utils.findMethod
 import com.github.kyuubiran.ezxhelper.utils.hookBefore
 import icu.nullptr.hidemyapplist.common.BuildConfig
@@ -11,10 +12,8 @@ import icu.nullptr.hidemyapplist.common.Constants
 object BridgeService {
 
     private const val TAG = "HMA-Bridge"
-
     private var appUid = 0
     private val blockedUids = mutableSetOf<Int>()
-    private var lastFailedUid = -1
 
     fun register(pms: IPackageManager) {
         logI(TAG, "Initialize HMAService - Version ${BuildConfig.SERVICE_VERSION}")
@@ -48,28 +47,38 @@ object BridgeService {
         if (code == Constants.TRANSACTION) {
             if (callingUid == appUid) {
                 logD(TAG, "Transaction from client")
-                runCatching {
+                return try {
                     data.enforceInterface(Constants.DESCRIPTOR)
                     when (data.readInt()) {
                         Constants.ACTION_GET_BINDER -> {
                             reply?.writeNoException()
                             reply?.writeStrongBinder(HMAService.instance)
-                            return true
+                            true
                         }
-                        else -> logW(TAG, "Unknown action")
+                        else -> {
+                            logW(TAG, "Unknown action")
+                            false
+                        }
                     }
-                }.onFailure {
-                    logE(TAG, "Transaction error", it)
-                    lastFailedUid = callingUid
+                } catch (e: RemoteException) {
+                    logE(TAG, "Transaction error: RemoteException", e)
                     blockedUids.add(callingUid)
+                    false
+                } catch (e: Exception) {
+                    logE(TAG, "Transaction error: Exception", e)
+                    blockedUids.add(callingUid)
+                    false
+                } finally {
+                    data.setDataPosition(0)
+                    reply?.setDataPosition(0)
                 }
             } else {
                 logW(TAG, "Someone else trying to get my binder?")
+                data.setDataPosition(0)
+                reply?.setDataPosition(0)
+                return false
             }
-            data.setDataPosition(0)
-            reply?.setDataPosition(0)
         }
         return false
     }
 }
-
