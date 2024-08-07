@@ -65,8 +65,6 @@ object ServiceClient : IHMAService, DeathRecipient {
         return service
     }
 
-    override fun asBinder() = service?.asBinder()
-
     override fun getServiceVersion() = getServiceLegacy()?.serviceVersion ?: 0
 
     override fun getFilterCount() = getServiceLegacy()?.filterCount ?: 0
