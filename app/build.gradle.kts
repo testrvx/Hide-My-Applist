@@ -34,10 +34,6 @@ kotlin {
     jvmToolchain(17)
 }
 
-lintOptions {
-    checkReleaseBuilds false
-}
-
 autoResConfig {
     generateClass.set(true)
     generateRes.set(false)
