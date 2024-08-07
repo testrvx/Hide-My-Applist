@@ -30,6 +30,7 @@ object ServiceClient : IHMAService, DeathRecipient {
     override fun binderDied() {
         service = null
         Log.e(TAG, "Binder died")
+    }
 
     override fun asBinder() = service?.asBinder()
 
