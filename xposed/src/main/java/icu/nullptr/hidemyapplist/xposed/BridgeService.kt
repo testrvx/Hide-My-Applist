@@ -63,6 +63,6 @@ object BridgeService {
             data.setDataPosition(0)
             reply?.setDataPosition(0)
         }
-        return false
+        return true
     }
 }
