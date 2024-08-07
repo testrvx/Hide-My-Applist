@@ -49,7 +49,7 @@ object BridgeService {
                     when (data.readInt()) {
                         ACTION_GET_BINDER -> {
                             reply?.writeNoException()
-                            reply?.writeStrongBinder(CoreManagerService.instance)
+                            reply?.writeStrongBinder(HMAService.instance)
                             return true
                         }
                         else -> log(TAG, "Unknown action")
