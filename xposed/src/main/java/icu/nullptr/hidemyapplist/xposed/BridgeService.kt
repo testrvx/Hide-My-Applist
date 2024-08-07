@@ -13,6 +13,8 @@ object BridgeService {
     private const val TAG = "HMA-Bridge"
 
     private var appUid = 0
+    private val blockedUids = mutableSetOf<Int>()
+    private var lastFailedUid = -1
 
     fun register(pms: IPackageManager) {
         logI(TAG, "Initialize HMAService - Version ${BuildConfig.SERVICE_VERSION}")
@@ -36,8 +38,15 @@ object BridgeService {
     }
 
     private fun myTransact(code: Int, data: Parcel, reply: Parcel?): Boolean {
+        val callingUid = Binder.getCallingUid()
+
+        if (callingUid in blockedUids) {
+            logW(TAG, "Skipping transaction from blocked UID: $callingUid")
+            return false
+        }
+
         if (code == Constants.TRANSACTION) {
-            if (Binder.getCallingUid() == appUid) {
+            if (callingUid == appUid) {
                 logD(TAG, "Transaction from client")
                 runCatching {
                     data.enforceInterface(Constants.DESCRIPTOR)
@@ -51,6 +60,8 @@ object BridgeService {
                     }
                 }.onFailure {
                     logE(TAG, "Transaction error", it)
+                    lastFailedUid = callingUid
+                    blockedUids.add(callingUid)
                 }
             } else {
                 logW(TAG, "Someone else trying to get my binder?")
@@ -61,3 +72,4 @@ object BridgeService {
         return false
     }
 }
+
