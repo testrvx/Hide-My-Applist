@@ -14,8 +14,9 @@ import java.util.Objects;
 // https://github.com/RikkaApps/Shizuku-API/blob/01e08879d58a5cb11a333535c6ddce9f7b7c88ff/api/src/main/java/rikka/shizuku/ShizukuBinderWrapper.java
 
 public class BinderWrapper implements IBinder {
-    public static final int TRANSACT_CODE = ('_' << 24) | ('H' << 16) | ('M' << 8) | 'A';
-    public static final String BINDER_DESCRIPTOR = "io.github.a13e300.BINDER_WRAPPER";
+    public static final int TRANSACT_CODE = ('_' << 24) | ('N' << 16) | ('E' << 8) | 'W'; // Updated characters
+    public static final String BINDER_DESCRIPTOR = "io.github.a13e300.NEW_BINDER_WRAPPER"; // Updated descriptor
+
 
     private final IBinder original;
     private final IBinder service;
