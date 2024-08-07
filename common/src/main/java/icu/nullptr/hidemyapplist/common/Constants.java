@@ -17,8 +17,9 @@ public class Constants {
     public static final String ANDROID_VOLD_APP_DATA_ISOLATION_ENABLED_PROPERTY = "persist.sys.vold_app_data_isolation_enabled";
 
     public static final String DESCRIPTOR = "android.content.pm.IPackageManager";
-    public static final int TRANSACTION = 'H' << 24 | 'M' << 16 | 'A' << 8 | 'D';
+    public static final int TRANSACTION = 'N' << 24 | 'E' << 16 | 'W' << 8 | 'C';
     public static final int ACTION_GET_BINDER = 1;
+
 
     public static final int UID_SYSTEM = 1000;
     public static final int PER_USER_RANGE = 100000;
