@@ -37,15 +37,6 @@ jobs:
           echo keyPassword='android' >> local.properties
           echo fileDir=`pwd`/key.jks >> local.properties
 
-      - name: Cache gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle-
-
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
@@ -72,9 +63,3 @@ jobs:
         with:
           name: mappings
           path: "app/build/outputs/mapping/release"
-
-      - name: Build debug
-        id: buildDebug
-        run: |
-          ./gradlew :app:assembleDebug
-          echo "debugName=$(ls app/build/apk/debug/HMA*-debug.apk | awk -F '(/|.apk)' '{print $6}')" >> $GITHUB_OUTPUT
