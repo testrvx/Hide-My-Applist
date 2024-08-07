@@ -72,7 +72,7 @@ fun Project.configureBaseExtension() {
                 signingConfig = config ?: signingConfigs["debug"]
             }
             named("release") {
-                isMinifyEnabled = true
+                isMinifyEnabled = false
                 proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             }
         }
