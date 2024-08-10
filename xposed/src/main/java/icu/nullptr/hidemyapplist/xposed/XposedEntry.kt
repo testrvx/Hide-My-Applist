@@ -50,8 +50,8 @@ class XposedEntry : IXposedHookZygoteInit, IXposedHookLoadPackage {
                     val pms = param.args[1] as IPackageManager
                     logD(TAG, "Got pms: $pms")
                     runCatching {
-                        UserService.register(pms)
-                        logI(TAG, "User service started")
+                        BridgeService.register(pms)
+                        logI(TAG, "Bridge service injected")
                     }.onFailure {
                         logE(TAG, "System service crashed", it)
                     }

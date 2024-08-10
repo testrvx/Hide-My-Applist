@@ -86,7 +86,7 @@ fun Project.configureBaseExtension() {
     extensions.findByType<ApplicationExtension>()?.run {
         buildTypes {
             named("release") {
-                isShrinkResources = true
+                isShrinkResources = false
             }
         }
     }

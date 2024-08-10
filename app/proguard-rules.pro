@@ -18,3 +18,4 @@
 }
 
 -dontobfuscate
+-dontwarn java.lang.invoke.StringConcatFactory
