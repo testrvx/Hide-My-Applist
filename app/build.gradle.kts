@@ -14,7 +14,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dan.hidemyapplist"
+    namespace = "com.tsng.hidemyapplist"
 
     buildFeatures {
         buildConfig = true
